@@ -184,7 +184,7 @@ export const CalendarInput = forwardRef<HTMLInputElement, CalendarInputProps>(
             onCalendarChange,
             onKeyDown,
             readOnly,
-            Calendar = DefaultCalendar,
+            Calendar,
             popoverPosition = 'bottom-start',
             zIndexPopover,
             useAnchorWidth,
