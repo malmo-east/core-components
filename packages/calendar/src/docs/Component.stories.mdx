@@ -91,33 +91,59 @@ import vars from '!!raw-loader!../vars.css';
         const [openSecond, setOpenSecond] = React.useState(false);
         const [value, setValue] = React.useState();
         const { selectedFrom, selectedTo, updatePeriod } = usePeriod();
-        return (
-            <>
-                <Button onClick={() => setOpenFirst(true)} style={{ margin: '15px' }}>
-                    Открыть календарь
-                </Button>
-                <Button onClick={() => setOpenSecond(true)} style={{ margin: '15px' }}>
-                    Открыть календарь (период)
-                </Button>
-                <CalendarMobile
-                    onClose={() => setOpenFirst(false)}
-                    open={openFirst}
-                    value={value}
-                    onChange={setValue}
-                    defaultView={select('defaultView', ['days', 'months', 'years'], 'days')}
-                    selectorView={select('selectorView', ['full', 'month-only'], 'full')}
-                />
-                <CalendarMobile
-                    onClose={() => setOpenSecond(false)}
-                    open={openSecond}
-                    onChange={updatePeriod}
-                    selectedFrom={selectedFrom}
-                    selectedTo={selectedTo}
-                    defaultView={select('defaultView', ['days', 'months', 'years'], 'days')}
-                    selectorView={select('selectorView', ['full', 'month-only'], 'full')}
-                />
-            </>
-        );
+        const selectorView = select('selectorView', ['full', 'month-only'], 'full');
+        const device = select('device', ['desktop', 'mobile'], 'desktop');
+        const defaultView = select('defaultView', ['days', 'months', 'years'], 'days');
+        const renderContent = () => {
+            if (device === 'desktop') {
+                return (
+                    <Calendar
+                        value={value}
+                        onChange={setValue}
+                        offDays={offDays}
+                        events={events}
+                        defaultView={defaultView}
+                        selectorView={selectorView}
+                    />
+                )
+            }
+            else if (selectorView === 'full') {
+                return (
+                    <>
+                        <Button onClick={() => setOpen(true)}>
+                            Открыть календарь
+                        </Button>
+                        <CalendarMobile
+                            onClose={() => setOpen(false)}
+                            open={open}
+                            value={value}
+                            onChange={setValue}
+                            defaultView={defaultView}
+                            selectorView={selectorView}
+                        />
+                    </>
+                )
+            }
+            else {
+                return (
+                    <>
+                        <Button onClick={() => setOpen(true)}>
+                            Открыть календарь (период)
+                        </Button>
+                        <CalendarMobile
+                            onClose={() => setOpen(false)}
+                            open={open}
+                            onChange={updatePeriod}
+                            selectedFrom={selectedFrom}
+                            selectedTo={selectedTo}
+                            defaultView={defaultView}
+                            selectorView={selectorView}
+                        />
+                    </>
+                )
+            }
+        }
+        return renderContent();
     })}
 </Story>
 
