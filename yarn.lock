@@ -5214,7 +5214,7 @@
     "@npmcli/promise-spawn" "^3.0.0"
     node-gyp "^8.4.1"
     read-package-json-fast "^2.0.3"
- 
+
 "@oat-sa/rollup-plugin-wildcard-external@^0.1.0":
   version "0.1.0"
   resolved "https://registry.yarnpkg.com/@oat-sa/rollup-plugin-wildcard-external/-/rollup-plugin-wildcard-external-0.1.0.tgz#3388bb5124a07bb09944f75a1d494ff9403bf4fe"
