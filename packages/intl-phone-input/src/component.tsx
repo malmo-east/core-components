@@ -11,6 +11,7 @@ import {
 } from '@alfalab/core-components-input-autocomplete';
 import { CountriesSelect } from './components';
 import { formatPhoneWithUnclearableCountryCode } from './utils/format-phone-with-unclearable-country-code';
+import { calculateCaretPos } from './utils/calculateCaretPos';
 import { useCaretAvoidCountryCode } from './useCaretAvoidCountryCode';
 
 import styles from './index.module.css';
@@ -243,48 +244,14 @@ export const IntlPhoneInput = forwardRef<HTMLInputElement, IntlPhoneInputProps>(
 
             newValue = formatPhone(addCountryCode(newValue));
 
-            let newCaretPosition;
-            const isFormatJumps = !shouldReplace && newValue.length - currentValue.length <= 0;
+            let phonePartWithoutMask =
+                currentValue.slice(0, caretPosition).replace(/\D/g, '') + event.key;
 
-            // Ситуация, когда происходят скачки номера из-за форматирования, например +7 999 999 99 99 -> +799999999999
-            if (isFormatJumps) {
-                let phonePart = currentValue.slice(0, caretPosition) + event.key;
-                let cursor = 0;
-
-                while (cursor < phonePart.length && cursor <= newValue.length) {
-                    const currChar = phonePart.charAt(cursor);
-                    const newValChar = newValue.charAt(cursor);
-
-                    if (currChar !== newValChar) {
-                        if (MASK_SYMBOLS.includes(currChar)) {
-                            phonePart = phonePart.slice(0, cursor) + phonePart.slice(cursor + 1);
-                            // eslint-disable-next-line no-continue
-                            continue;
-                        } else {
-                            phonePart =
-                                phonePart.slice(0, cursor) + newValChar + phonePart.slice(cursor);
-                        }
-                    }
-                    cursor += 1;
-                }
-
-                newCaretPosition = cursor;
-            } else {
-                let cursor = 0;
-
-                while (
-                    newValue.charAt(caretPosition + cursor) &&
-                    newValue.charAt(caretPosition + cursor) !== event.key
-                ) {
-                    cursor += 1;
-                }
-
-                cursor += 1;
-
-                newCaretPosition = caretPosition + cursor;
+            if (shouldReplace && phonePartWithoutMask.length > maxLen) {
+                phonePartWithoutMask = phonePartWithoutMask.slice(0, -1);
             }
 
-            setCaretPos(newCaretPosition);
+            setCaretPos(calculateCaretPos(phonePartWithoutMask, newValue));
             setCountryByDialCodeWithLengthCheck(newValue);
             onChange(newValue);
         };
@@ -300,7 +267,7 @@ export const IntlPhoneInput = forwardRef<HTMLInputElement, IntlPhoneInputProps>(
             const currentValue = input.value;
             let deletedCharsCount = 1;
 
-            // Высчитываем новое положение каретки с учетом символов маски.
+            // Высчитываем кол-во символов, которые нужно удалить.
             while (
                 caretPosition - deletedCharsCount > 0 &&
                 MASK_SYMBOLS.includes(currentValue.charAt(caretPosition - deletedCharsCount))
@@ -308,46 +275,25 @@ export const IntlPhoneInput = forwardRef<HTMLInputElement, IntlPhoneInputProps>(
                 deletedCharsCount += 1;
             }
 
-            let newCaretPosition = caretPosition - deletedCharsCount;
-
+            const phonePart = currentValue.slice(0, caretPosition - deletedCharsCount);
             const newValue = formatPhone(
-                addCountryCode(
-                    currentValue.slice(0, newCaretPosition) + currentValue.slice(caretPosition),
-                ),
+                addCountryCode(phonePart + currentValue.slice(caretPosition)),
             );
 
-            const isFormatJumps = newValue.length - currentValue.length >= 0;
-            // Обрабатываем ситуацию, когда происходят скачки номера из-за форматирования, например +799999999999 => +7 999 999 99 99
-            if (isFormatJumps) {
-                let phonePart = currentValue.slice(0, newCaretPosition);
-                let cursor = 0;
+            const phonePartWithoutMask = phonePart.replace(/[^0-9+]+/g, '');
 
-                while (cursor < phonePart.length) {
-                    const currChar = newValue.charAt(cursor);
-
-                    if (currChar !== phonePart.charAt(cursor)) {
-                        phonePart = phonePart.slice(0, cursor) + currChar + phonePart.slice(cursor);
-                    }
-                    cursor += 1;
-                }
-
-                newCaretPosition = cursor;
-            }
-
-            setCaretPos(newCaretPosition);
+            setCaretPos(calculateCaretPos(phonePartWithoutMask, newValue));
             setCountryByDialCodeWithLengthCheck(newValue);
             onChange(newValue);
         };
 
         const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
             const input = event.target as HTMLInputElement;
-            const caretPosition = input.selectionStart;
-
-            if (!caretPosition) {
-                return;
-            }
+            const caretPosition = input.selectionStart || 0;
 
             if (event.key === 'Backspace') {
+                if (!caretPosition) return;
+
                 event.preventDefault();
 
                 handleDeleteChar(event, caretPosition);
